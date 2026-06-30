@@ -66,9 +66,9 @@ uv run inside-voice --threshold -28
 
 - `q` — quit
 - `m` — mute/unmute chime playback
-- `c` — calibrate threshold to 6 dB above the current level
+- `c` — one-shot threshold calibration: set threshold to current level + 6 dB
 - `t` — toggle first chime behavior between immediate and sustained
-- Arrow keys — adjust the focused slider
+- Arrow keys — adjust the focused slider; after `c`, Threshold gets focus
 - Page Up/Page Down — adjust focused slider in larger steps
 - Home/End — move focused slider to minimum/maximum
 - Mouse click/drag — set slider values
@@ -78,6 +78,8 @@ uv run inside-voice --threshold -28
 1. Join a call with your normal headphones/microphone setup.
 2. Speak at a comfortable normal volume.
 3. Press `c` to place the threshold slightly above that level.
+   - `c` is not a mode; it immediately updates the Threshold slider and saves it.
+   - After calibration, arrow keys adjust the Threshold slider for fine-tuning.
 4. Leave "Immediate first chime" enabled if you want prompt feedback.
 5. Disable "Immediate first chime" if you only want alerts after sustained loudness.
 6. If the chime triggers too often, raise the threshold or increase cooldown.

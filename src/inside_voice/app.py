@@ -62,7 +62,7 @@ class InsideVoiceApp(App[None]):
         ("q", "quit", "Quit"),
         ("m", "toggle_mute", "Mute chime"),
         ("t", "toggle_trigger_mode", "Trigger mode"),
-        ("c", "calibrate", "Calibrate"),
+        ("c", "calibrate", "Calibrate threshold"),
     ]
 
     def __init__(self, settings: Settings) -> None:
@@ -127,7 +127,7 @@ class InsideVoiceApp(App[None]):
                 id="volume",
             )
             yield Static(
-                "Keys: q quit • m mute • t trigger mode • c calibrate • arrows adjust slider",
+                "Keys: q quit • m mute • t mode • c calibrate threshold • arrows adjust focus",
                 id="help",
             )
         yield Footer()
@@ -191,9 +191,11 @@ class InsideVoiceApp(App[None]):
         current_db = self.monitor.get_state().db
         threshold = clamp(current_db + 6.0, DB_FLOOR, 0.0)
         self.settings.threshold_db = threshold
-        self.query_one("#threshold", ValueSlider).set_value(threshold)
+        threshold_slider = self.query_one("#threshold", ValueSlider)
+        threshold_slider.set_value(threshold)
+        threshold_slider.focus()
         save_settings(self.settings)
-        self.notify(f"Threshold calibrated to {threshold:.0f} dB")
+        self.notify(f"Threshold set to {threshold:.0f} dB; arrows now adjust the Threshold slider")
 
     def refresh_audio_state(self) -> None:
         """Refresh meter/status and play chime when appropriate."""
