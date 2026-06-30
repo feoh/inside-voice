@@ -73,6 +73,37 @@ def test_trigger_detector_chimes_on_threshold_crossing_then_uses_cooldown() -> N
         raise AssertionError("detector should chime on crossing, then respect cooldown")
 
 
+def test_trigger_detector_can_wait_for_sustained_loudness_before_first_chime() -> None:
+    detector = TriggerDetector()
+
+    first = detector.update(
+        level_db=-20.0,
+        threshold_db=-30.0,
+        trigger_duration_s=0.5,
+        cooldown_s=1.0,
+        immediate_first_chime=False,
+        now=0.0,
+    )
+    second = detector.update(
+        level_db=-20.0,
+        threshold_db=-30.0,
+        trigger_duration_s=0.5,
+        cooldown_s=1.0,
+        immediate_first_chime=False,
+        now=0.4,
+    )
+    third = detector.update(
+        level_db=-20.0,
+        threshold_db=-30.0,
+        trigger_duration_s=0.5,
+        cooldown_s=1.0,
+        immediate_first_chime=False,
+        now=0.6,
+    )
+    if [first, second, third] != [False, False, True]:
+        raise AssertionError("sustained mode should wait before the first chime")
+
+
 def test_trigger_detector_rearms_after_returning_below_threshold() -> None:
     detector = TriggerDetector()
 

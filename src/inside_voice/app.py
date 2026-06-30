@@ -7,8 +7,8 @@ import time
 
 from rich.text import Text
 from textual.app import App, ComposeResult
-from textual.containers import Container
-from textual.widgets import Footer, Header, Static
+from textual.containers import Container, Horizontal
+from textual.widgets import Footer, Header, Static, Switch
 
 from .audio import DB_FLOOR, AudioMonitor, ChimePlayer, TriggerDetector
 from .config import Settings, clamp, save_settings
@@ -41,6 +41,14 @@ class InsideVoiceApp(App[None]):
     #status {
         margin-bottom: 1;
     }
+    .setting-row {
+        height: 3;
+        margin-top: 1;
+    }
+    .switch-label {
+        width: 1fr;
+        content-align: left middle;
+    }
     #help {
         margin-top: 1;
         color: $text-muted;
@@ -53,6 +61,7 @@ class InsideVoiceApp(App[None]):
     BINDINGS = [
         ("q", "quit", "Quit"),
         ("m", "toggle_mute", "Mute chime"),
+        ("t", "toggle_trigger_mode", "Trigger mode"),
         ("c", "calibrate", "Calibrate"),
     ]
 
@@ -94,6 +103,9 @@ class InsideVoiceApp(App[None]):
                 precision=1,
                 id="trigger",
             )
+            with Horizontal(classes="setting-row"):
+                yield Static("Immediate first chime", classes="switch-label")
+                yield Switch(value=self.settings.immediate_first_chime, id="immediate-first-chime")
             yield ValueSlider(
                 "Cooldown",
                 minimum=0.5,
@@ -115,7 +127,7 @@ class InsideVoiceApp(App[None]):
                 id="volume",
             )
             yield Static(
-                "Keys: q quit • m mute/unmute • c calibrate • arrows adjust focused slider",
+                "Keys: q quit • m mute • t trigger mode • c calibrate • arrows adjust slider",
                 id="help",
             )
         yield Footer()
@@ -151,12 +163,27 @@ class InsideVoiceApp(App[None]):
             self.settings.chime_volume = event.value / 100.0
         save_settings(self.settings)
 
+    def on_switch_changed(self, event: Switch.Changed) -> None:
+        """Persist switch changes."""
+
+        if event.switch.id == "immediate-first-chime":
+            self.settings.immediate_first_chime = event.value
+            save_settings(self.settings)
+
     def action_toggle_mute(self) -> None:
         """Toggle audible chime playback."""
 
         self.settings.muted = not self.settings.muted
         save_settings(self.settings)
         self.refresh_audio_state()
+
+    def action_toggle_trigger_mode(self) -> None:
+        """Toggle between immediate and sustained first-chime behavior."""
+
+        new_value = not self.settings.immediate_first_chime
+        self.settings.immediate_first_chime = new_value
+        self.query_one("#immediate-first-chime", Switch).value = new_value
+        save_settings(self.settings)
 
     def action_calibrate(self) -> None:
         """Set threshold slightly above the current mic level."""
@@ -179,6 +206,7 @@ class InsideVoiceApp(App[None]):
             threshold_db=self.settings.threshold_db,
             trigger_duration_s=self.settings.trigger_duration_s,
             cooldown_s=self.settings.cooldown_s,
+            immediate_first_chime=self.settings.immediate_first_chime,
         )
         if (
             should_chime

@@ -26,9 +26,10 @@ class LevelState:
 class TriggerDetector:
     """Detect over-threshold audio with cooldown.
 
-    The first transition from quiet to loud triggers immediately. If the level
-    remains loud, additional chimes are allowed only after both the sustain
-    duration and cooldown have elapsed.
+    Depending on configuration, the first transition from quiet to loud either
+    triggers immediately or waits for the sustain duration. If the level remains
+    loud, additional chimes are allowed only after both the sustain duration and
+    cooldown have elapsed.
     """
 
     def __init__(self) -> None:
@@ -43,6 +44,7 @@ class TriggerDetector:
         threshold_db: float,
         trigger_duration_s: float,
         cooldown_s: float,
+        immediate_first_chime: bool = True,
         now: float | None = None,
     ) -> bool:
         """Return True when the loudness condition should trigger a chime."""
@@ -59,7 +61,7 @@ class TriggerDetector:
             self._over_since = now
 
         cooled_down = now - self._last_triggered_at >= cooldown_s
-        if crossed_threshold and cooled_down:
+        if crossed_threshold and immediate_first_chime and cooled_down:
             self._last_triggered_at = now
             return True
 

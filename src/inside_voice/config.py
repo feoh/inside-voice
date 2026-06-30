@@ -19,6 +19,7 @@ class Settings:
 
     threshold_db: float = -25.0
     trigger_duration_s: float = 0.4
+    immediate_first_chime: bool = True
     cooldown_s: float = 3.0
     chime_volume: float = 0.35
     muted: bool = False
@@ -56,10 +57,10 @@ def load_settings(path: Path | None = None) -> Settings:
 def save_settings(settings: Settings, path: Path | None = None) -> Path:
     """Persist settings and return the path written."""
 
-    path = path or config_path()
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(asdict(settings), indent=2, sort_keys=True) + "\n")
-    return path
+    target = (path or config_path()).expanduser().resolve()
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(json.dumps(asdict(settings), indent=2, sort_keys=True) + "\n")
+    return target
 
 
 def clamp(value: float, minimum: float, maximum: float) -> float:
