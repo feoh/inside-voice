@@ -2,8 +2,8 @@
 
 `inside-voice` is a terminal app that helps you keep your speaking volume down
 while you are on Zoom, Google Meet, or other calls. It watches your microphone
-level and plays a short local chime when your voice stays above an adjustable dB
-threshold.
+level and plays a short local chime when your voice crosses above an adjustable
+dB threshold.
 
 The app is Linux-first and built with cross-platform pieces
 (`sounddevice`/PortAudio + Textual), so macOS and Windows should be achievable
@@ -13,7 +13,7 @@ even though Linux is the primary target.
 
 - Live microphone level meter in dBFS
 - Textual TUI with mouse/keyboard-adjustable sliders
-- Sliders for threshold, trigger duration, cooldown, and chime volume
+- Sliders for threshold, repeat sustain duration, cooldown, and chime volume
 - Generated two-tone chime; no bundled audio asset required
 - Mute toggle and quick calibration action
 - Settings saved under your platform config directory
@@ -76,9 +76,9 @@ uv run inside-voice --threshold -28
 1. Join a call with your normal headphones/microphone setup.
 2. Speak at a comfortable normal volume.
 3. Press `c` to place the threshold slightly above that level.
-4. If the chime triggers too often, raise the threshold or trigger duration.
-5. If it triggers too late, lower the threshold or trigger duration.
-6. Increase cooldown if repeated chimes are annoying.
+4. If the chime triggers too often, raise the threshold or increase cooldown.
+5. If it triggers too late, lower the threshold.
+6. Increase repeat sustain if repeated chimes are annoying while staying loud.
 
 The meter uses dBFS, where `0 dBFS` is the loudest possible digital input and
 quieter sounds are negative numbers. Typical microphone speech levels often land

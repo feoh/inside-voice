@@ -31,7 +31,7 @@ def test_smooth_db_moves_toward_current_value() -> None:
         raise AssertionError("smoothed value should move toward current level")
 
 
-def test_trigger_detector_requires_duration_and_cooldown() -> None:
+def test_trigger_detector_chimes_on_threshold_crossing_then_uses_cooldown() -> None:
     detector = TriggerDetector()
 
     first = detector.update(
@@ -69,8 +69,36 @@ def test_trigger_detector_requires_duration_and_cooldown() -> None:
         cooldown_s=1.0,
         now=1.7,
     )
-    if [first, second, third, fourth, fifth] != [False, False, True, False, True]:
-        raise AssertionError("detector should require duration and cooldown")
+    if [first, second, third, fourth, fifth] != [True, False, False, True, False]:
+        raise AssertionError("detector should chime on crossing, then respect cooldown")
+
+
+def test_trigger_detector_rearms_after_returning_below_threshold() -> None:
+    detector = TriggerDetector()
+
+    first = detector.update(
+        level_db=-20.0,
+        threshold_db=-30.0,
+        trigger_duration_s=0.5,
+        cooldown_s=1.0,
+        now=0.0,
+    )
+    below = detector.update(
+        level_db=-40.0,
+        threshold_db=-30.0,
+        trigger_duration_s=0.5,
+        cooldown_s=1.0,
+        now=1.1,
+    )
+    second = detector.update(
+        level_db=-20.0,
+        threshold_db=-30.0,
+        trigger_duration_s=0.5,
+        cooldown_s=1.0,
+        now=1.2,
+    )
+    if [first, below, second] != [True, False, True]:
+        raise AssertionError("detector should re-arm after the level drops below threshold")
 
 
 def test_make_chime_generates_audio() -> None:

@@ -40,7 +40,7 @@ def load_settings(path: Path | None = None) -> Settings:
 
     try:
         raw = json.loads(path.read_text())
-    except (OSError, json.JSONDecodeError):
+    except OSError, json.JSONDecodeError:
         return Settings()
 
     allowed = {field.name for field in fields(Settings)}
@@ -67,6 +67,6 @@ def clamp(value: float, minimum: float, maximum: float) -> float:
 
     try:
         number = float(value)
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         return minimum
     return max(minimum, min(maximum, number))

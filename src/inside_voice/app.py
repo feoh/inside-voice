@@ -85,7 +85,7 @@ class InsideVoiceApp(App[None]):
                 id="threshold",
             )
             yield ValueSlider(
-                "Trigger",
+                "Repeat sustain",
                 minimum=0.1,
                 maximum=2.0,
                 value=self.settings.trigger_duration_s,
@@ -180,8 +180,11 @@ class InsideVoiceApp(App[None]):
             trigger_duration_s=self.settings.trigger_duration_s,
             cooldown_s=self.settings.cooldown_s,
         )
-        if should_chime and not self.settings.muted:
-            self.chime.play(volume=self.settings.chime_volume)
+        if (
+            should_chime
+            and not self.settings.muted
+            and self.chime.play(volume=self.settings.chime_volume)
+        ):
             self._last_chime_at = time.monotonic()
 
         self.query_one("#level", Static).update(f"Current level: {level:5.1f} dBFS")
@@ -192,7 +195,7 @@ class InsideVoiceApp(App[None]):
             self._status_text(
                 too_loud=too_loud,
                 input_status=state.input_status,
-                error=state.last_error,
+                error=state.last_error or self.chime.last_error,
             )
         )
 

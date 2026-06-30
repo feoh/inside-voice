@@ -24,11 +24,17 @@ class LevelState:
 
 
 class TriggerDetector:
-    """Detect sustained over-threshold audio with cooldown."""
+    """Detect over-threshold audio with cooldown.
+
+    The first transition from quiet to loud triggers immediately. If the level
+    remains loud, additional chimes are allowed only after both the sustain
+    duration and cooldown have elapsed.
+    """
 
     def __init__(self) -> None:
         self._over_since: float | None = None
         self._last_triggered_at = -math.inf
+        self._was_over_threshold = False
 
     def update(
         self,
@@ -44,14 +50,20 @@ class TriggerDetector:
         now = time.monotonic() if now is None else now
         if level_db < threshold_db:
             self._over_since = None
+            self._was_over_threshold = False
             return False
 
+        crossed_threshold = not self._was_over_threshold
+        self._was_over_threshold = True
         if self._over_since is None:
             self._over_since = now
-            return False
+
+        cooled_down = now - self._last_triggered_at >= cooldown_s
+        if crossed_threshold and cooled_down:
+            self._last_triggered_at = now
+            return True
 
         loud_long_enough = now - self._over_since >= trigger_duration_s
-        cooled_down = now - self._last_triggered_at >= cooldown_s
         if loud_long_enough and cooled_down:
             self._last_triggered_at = now
             return True
@@ -135,20 +147,33 @@ class ChimePlayer:
 
     def __init__(self, *, samplerate: int = 44_100) -> None:
         self.samplerate = samplerate
+        self._lock = Lock()
+        self.last_error: str | None = None
 
-    def play(self, *, volume: float) -> None:
-        """Play the chime asynchronously."""
+    def play(self, *, volume: float) -> bool:
+        """Play the chime asynchronously.
+
+        Returns True when playback was queued. Any playback error is captured in
+        ``last_error`` so the TUI can make silent failures visible.
+        """
 
         if volume <= 0:
-            return
+            return False
         thread = Thread(target=self._play_blocking, kwargs={"volume": volume}, daemon=True)
         thread.start()
+        return True
 
     def _play_blocking(self, *, volume: float) -> None:
         import sounddevice as sd
 
         audio = make_chime(volume=volume, samplerate=self.samplerate)
-        sd.play(audio, samplerate=self.samplerate, blocking=True)
+        with self._lock:
+            try:
+                sd.play(audio, samplerate=self.samplerate, blocking=True)
+            except Exception as exc:  # noqa: BLE001 - audio backends raise environment-specific errors.
+                self.last_error = str(exc)
+            else:
+                self.last_error = None
 
 
 def rms_dbfs(samples: np.ndarray[Any, np.dtype[np.floating[Any]]]) -> float:
@@ -158,7 +183,7 @@ def rms_dbfs(samples: np.ndarray[Any, np.dtype[np.floating[Any]]]) -> float:
         return DB_FLOOR
     try:
         rms = float(np.sqrt(np.mean(np.square(samples, dtype=np.float64))))
-    except (FloatingPointError, TypeError, ValueError):
+    except FloatingPointError, TypeError, ValueError:
         return DB_FLOOR
     if rms <= 0:
         return DB_FLOOR
@@ -218,12 +243,12 @@ def list_input_devices() -> list[str]:
 def _sample_count(*, samplerate: int, duration_s: float) -> int:
     try:
         return max(1, int(float(samplerate) * duration_s))
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         return 1
 
 
 def _safe_int(value: Any) -> int:
     try:
         return int(value)
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         return 0
