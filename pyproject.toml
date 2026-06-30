@@ -1,6 +1,6 @@
 [project]
 name = "inside-voice"
-version = "0.1.0"
+version = "0.1.1"
 description = "A Textual app that reminds you to keep your voice down on calls."
 readme = "README.md"
 authors = [{ name = "Christopher Patti", email = "feoh@feoh.org" }]

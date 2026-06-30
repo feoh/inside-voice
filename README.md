@@ -34,7 +34,16 @@ sudo apt install libportaudio2 portaudio19-dev
 
 Package names vary by distribution.
 
-## Install and run from source
+## Install and run
+
+From PyPI:
+
+```bash
+uv tool install inside-voice
+inside-voice
+```
+
+From source:
 
 ```bash
 git clone https://github.com/feoh/inside-voice.git
