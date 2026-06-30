@@ -9,6 +9,8 @@ The app is Linux-first and built with cross-platform pieces
 (`sounddevice`/PortAudio + Textual), so macOS and Windows should be achievable
 even though Linux is the primary target.
 
+![inside-voice TUI screenshot](Inside_Voice_Screenshot.png)
+
 ## Features
 
 - Live microphone level meter in dBFS
